@@ -1,0 +1,23 @@
+services:
+
+  redis:
+    image: redis:7
+    container_name: cryptopus-redis
+    ports:
+      - "6379:6379"
+    restart: unless-stopped
+
+  api:
+    build:
+      context: ./services/api
+      dockerfile: Dockerfile
+    container_name: cryptopus-api
+    ports:
+      - "8000:8000"
+    environment:
+      - DJANGO_SETTINGS_MODULE=cryptopus.settings.development
+    volumes:
+      - ./services/api:/app
+    depends_on:
+      - redis
+    restart: unless-stopped
