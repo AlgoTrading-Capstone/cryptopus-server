@@ -21,3 +21,18 @@ class UserResponseSerializer(serializers.ModelSerializer):
     class Meta:
         model = User
         fields = ["id", "email", "created_at"]
+
+class SetupOtpSerializer(serializers.Serializer):
+    """Serializer for OTP setup."""
+    email = serializers.EmailField()
+
+
+class SetupOtpResponseSerializer(serializers.Serializer):
+    """Serializer for OTP setup response."""
+    otp_secret = serializers.CharField()
+    qr_code_url = serializers.CharField()
+    message = serializers.CharField()
+
+class VerifyOtpSetupSerializer(serializers.Serializer):
+    email = serializers.EmailField()
+    otp_code = serializers.CharField(min_length=6, max_length=6)

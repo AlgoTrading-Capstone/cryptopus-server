@@ -1,7 +1,13 @@
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status
-from apps.authentication.serializers import RegisterSerializer, VerifyEmailSerializer, UserResponseSerializer
+from apps.authentication.serializers import (
+    RegisterSerializer,
+    VerifyEmailSerializer,
+    UserResponseSerializer,
+    SetupOtpSerializer,
+    SetupOtpResponseSerializer,
+    VerifyOtpSetupSerializer)
 from apps.authentication.services import AuthService
 
 
@@ -55,6 +61,55 @@ class VerifyEmailView(APIView):
                     "email_verified": user.email_verified,
                     "otp_setup_required": True,
                     "message": "Email verified successfully.",
+                },
+            },
+            status=status.HTTP_200_OK,
+        )
+class SetupOtpView(APIView):
+
+    def post(self, request):
+        """POST /api/auth/setup-otp"""
+        serializer = SetupOtpSerializer(data=request.data)
+        if not serializer.is_valid():
+            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+        try:
+            data = AuthService.setup_otp(
+                email=serializer.validated_data["email"],
+            )
+        except ValueError as e:
+            return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
+
+        return Response(
+            {
+                "status": "success",
+                "data": SetupOtpResponseSerializer(data).data,
+            },
+            status=status.HTTP_200_OK,
+        )
+
+class VerifyOtpSetupView(APIView):
+
+    def post(self, request):
+        """POST /api/auth/verify-otp-setup"""
+        serializer = VerifyOtpSetupSerializer(data=request.data)
+        if not serializer.is_valid():
+            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+        try:
+            user = AuthService.verify_otp_setup(
+                email=serializer.validated_data["email"],
+                otp_code=serializer.validated_data["otp_code"],
+            )
+        except ValueError as e:
+            return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
+
+        return Response(
+            {
+                "status": "success",
+                "data": {
+                    "otp_enabled": user.otp_enabled,
+                    "message": "OTP enabled successfully. You can now log in.",
                 },
             },
             status=status.HTTP_200_OK,
