@@ -62,3 +62,18 @@ class TokenResponseSerializer(serializers.Serializer):
     refresh_token = serializers.CharField()
     expires_in = serializers.IntegerField()
     user_id = serializers.CharField()
+
+class RefreshTokenSerializer(serializers.Serializer):
+    """Serializer for refreshing access token."""
+    refresh_token = serializers.CharField()
+
+
+class RefreshTokenResponseSerializer(serializers.Serializer):
+    """Serializer for refresh token response."""
+    access_token = serializers.CharField()
+    expires_in = serializers.IntegerField()
+
+
+class LogoutSerializer(serializers.Serializer):
+    """Serializer for user logout."""
+    refresh_token = serializers.CharField()

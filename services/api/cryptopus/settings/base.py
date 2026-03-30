@@ -37,6 +37,7 @@ INSTALLED_APPS = [
     # Third-party
     "rest_framework",
     "channels",
+    "rest_framework_simplejwt.token_blacklist",
 
     # Project apps
     "apps.authentication",

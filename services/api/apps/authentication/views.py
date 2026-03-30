@@ -11,7 +11,10 @@ from apps.authentication.serializers import (
     LoginSerializer,
     LoginResponseSerializer,
     VerifyOtpSerializer,
-    TokenResponseSerializer
+    TokenResponseSerializer,
+    RefreshTokenSerializer,
+    RefreshTokenResponseSerializer,
+    LogoutSerializer,
 )
 from apps.authentication.services import AuthService
 
@@ -163,6 +166,53 @@ class VerifyOtpView(APIView):
             {
                 "status": "success",
                 "data": TokenResponseSerializer(data).data,
+            },
+            status=status.HTTP_200_OK,
+        )
+
+class RefreshTokenView(APIView):
+
+    def post(self, request):
+        """POST /api/auth/refresh"""
+        serializer = RefreshTokenSerializer(data=request.data)
+        if not serializer.is_valid():
+            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+        try:
+            data = AuthService.refresh_token(
+                refresh_token=serializer.validated_data["refresh_token"],
+            )
+        except ValueError as e:
+            return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
+
+        return Response(
+            {
+                "status": "success",
+                "data": RefreshTokenResponseSerializer(data).data,
+            },
+            status=status.HTTP_200_OK,
+        )
+
+
+class LogoutView(APIView):
+
+    def post(self, request):
+        """POST /api/auth/logout"""
+        serializer = LogoutSerializer(data=request.data)
+        if not serializer.is_valid():
+            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+        try:
+            AuthService.logout(
+                refresh_token=serializer.validated_data["refresh_token"],
+            )
+        except ValueError as e:
+            return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
+
+        return Response(
+            {
+                "status": "success",
+                "data": {"message": "Logged out successfully."},
             },
             status=status.HTTP_200_OK,
         )

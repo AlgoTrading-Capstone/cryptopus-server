@@ -4,6 +4,7 @@ import json
 from rest_framework_simplejwt.tokens import RefreshToken
 from django.core.cache import cache
 from apps.authentication.models import User
+from rest_framework_simplejwt.exceptions import TokenError
 
 
 class AuthService:
@@ -177,3 +178,27 @@ class AuthService:
             "expires_in": 3600,
             "user_id": str(user.id),
         }
+
+    @staticmethod
+    def refresh_token(refresh_token: str) -> dict:
+        """Issue a new access token using a valid refresh token."""
+        try:
+            refresh = RefreshToken(refresh_token) # Create a RefreshToken instance from the provided refresh token string. This will validate the token and decode its payload. If the token is invalid or expired, it will raise a TokenError.
+            new_access_token = str(refresh.access_token)
+        except TokenError:
+            raise ValueError("Invalid or expired refresh token")
+
+        return {
+            "access_token": new_access_token,
+            "expires_in": 3600, #3600 seconds (1 hour)
+        }
+
+    @staticmethod
+    def logout(refresh_token: str) -> None:
+        """Blacklist the refresh token to invalidate the session."""
+
+        try:
+            refresh = RefreshToken(refresh_token)
+            refresh.blacklist() # The blacklist() method is used to add the refresh token to a blacklist, which is a mechanism provided by the Simple JWT library to invalidate tokens. When a token is blacklisted, it cannot be used to obtain new access tokens or refresh existing ones, effectively logging the user out and preventing further use of that token.
+        except TokenError:
+            raise ValueError("Invalid or expired refresh token")
