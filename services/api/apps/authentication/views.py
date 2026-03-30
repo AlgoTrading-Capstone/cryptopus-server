@@ -7,7 +7,12 @@ from apps.authentication.serializers import (
     UserResponseSerializer,
     SetupOtpSerializer,
     SetupOtpResponseSerializer,
-    VerifyOtpSetupSerializer)
+    VerifyOtpSetupSerializer,
+    LoginSerializer,
+    LoginResponseSerializer,
+    VerifyOtpSerializer,
+    TokenResponseSerializer
+)
 from apps.authentication.services import AuthService
 
 
@@ -111,6 +116,53 @@ class VerifyOtpSetupView(APIView):
                     "otp_enabled": user.otp_enabled,
                     "message": "OTP enabled successfully. You can now log in.",
                 },
+            },
+            status=status.HTTP_200_OK,
+        )
+class LoginView(APIView):
+
+    def post(self, request):
+        """POST /api/auth/login"""
+        serializer = LoginSerializer(data=request.data)
+        if not serializer.is_valid():
+            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+        try:
+            data = AuthService.login(
+                email=serializer.validated_data["email"],
+                password=serializer.validated_data["password"],
+            )
+        except ValueError as e:
+            return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
+
+        return Response(
+            {
+                "status": "success",
+                "data": LoginResponseSerializer(data).data,
+            },
+            status=status.HTTP_200_OK,
+        )
+
+class VerifyOtpView(APIView):
+
+    def post(self, request):
+        """POST /api/auth/verify-otp"""
+        serializer = VerifyOtpSerializer(data=request.data)
+        if not serializer.is_valid():
+            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+        try:
+            data = AuthService.verify_otp(
+                temporary_session_id=serializer.validated_data["temporary_session_id"],
+                otp_code=serializer.validated_data["otp_code"],
+            )
+        except ValueError as e:
+            return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
+
+        return Response(
+            {
+                "status": "success",
+                "data": TokenResponseSerializer(data).data,
             },
             status=status.HTTP_200_OK,
         )

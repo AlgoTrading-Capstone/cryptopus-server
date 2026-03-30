@@ -1,4 +1,7 @@
 import pyotp
+import uuid
+import json
+from rest_framework_simplejwt.tokens import RefreshToken
 from django.core.cache import cache
 from apps.authentication.models import User
 
@@ -109,3 +112,68 @@ class AuthService:
         user.save(update_fields=["otp_enabled"])
 
         return user
+
+    @staticmethod
+    def login(email: str, password: str) -> dict:
+        """Validate credentials and return temporary session for OTP verification."""
+        try:
+            user = User.objects.get(email=email)
+        except User.DoesNotExist:
+            raise ValueError("Invalid credentials")
+
+        if not user.check_password(password):
+            raise ValueError("Invalid credentials")
+
+        if not user.email_verified:
+            raise ValueError("Email not verified")
+
+        if user.account_status != User.AccountStatus.ACTIVE:
+            raise ValueError("Account is suspended")
+
+        # Create temporary session in Redis - valid for 5 minutes
+        tmp_session_id = str(uuid.uuid4()) #128-character unique identifier for the temporary session, generated using UUID4 which creates a random UUID. This ID will be used as a key in Redis to store the temporary session data for OTP verification.
+        cache.set(
+            f"session:tmp:{tmp_session_id}",
+            {"user_id": str(user.id), "email": user.email},
+            timeout=300, #5 minutes (300 seconds)
+        )
+
+        return {
+            "otp_required": True,
+            "temporary_session_id": tmp_session_id,
+            "message": "Password verified. OTP verification required.",
+        }
+
+    @staticmethod
+    def verify_otp(temporary_session_id: str, otp_code: str) -> dict:
+        """Verify OTP code and issue JWT tokens."""
+        # Get temporary session from Redis
+        session_data = cache.get(f"session:tmp:{temporary_session_id}")
+        if session_data is None:
+            raise ValueError("Session expired or invalid")
+
+        # Get user
+        try:
+            user = User.objects.get(id=session_data["user_id"])
+        except User.DoesNotExist:
+            raise ValueError("User not found")
+
+        # Verify OTP code
+        totp = pyotp.TOTP(user.otp_secret)
+        if not totp.verify(otp_code):
+            raise ValueError("Invalid OTP code")
+
+        # Delete temporary session — one time use
+        cache.delete(f"session:tmp:{temporary_session_id}")
+
+        # Issue JWT tokens
+        refresh = RefreshToken.for_user(user) # Generate a new refresh token for the authenticated user. The RefreshToken class is part of the Simple JWT library and provides a convenient way to create JWT tokens for a user. The for_user method takes a user instance and generates a refresh token that can be used to obtain access tokens for authenticated API requests.
+        access_token = str(refresh.access_token) # Generate an access token from the refresh token. The access token is a short-lived token that can be used to authenticate API requests. The access_token property of the RefreshToken instance generates a new access token based on the refresh token's payload and the user's information.
+        refresh_token = str(refresh) # Convert the refresh token to a string. The RefreshToken instance can be directly converted to a string, which will give you the actual token value that can be sent to the client.
+
+        return {
+            "access_token": access_token,
+            "refresh_token": refresh_token,
+            "expires_in": 3600,
+            "user_id": str(user.id),
+        }
