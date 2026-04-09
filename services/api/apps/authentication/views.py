@@ -17,10 +17,10 @@ from apps.authentication.serializers import (
     LogoutSerializer,
 )
 from apps.authentication.services import AuthService
-
+from rest_framework.permissions import AllowAny
 
 class RegisterView(APIView):
-
+    permission_classes = [AllowAny]
     def post(self, request):
         """POST /api/auth/register"""
         serializer = RegisterSerializer(data=request.data) # Validate incoming data using the RegisterSerializer
@@ -47,7 +47,7 @@ class RegisterView(APIView):
 
 
 class VerifyEmailView(APIView):
-
+    permission_classes = [AllowAny]
     def post(self, request):
         """POST /api/auth/verify-email"""
         serializer = VerifyEmailSerializer(data=request.data)
@@ -74,7 +74,7 @@ class VerifyEmailView(APIView):
             status=status.HTTP_200_OK,
         )
 class SetupOtpView(APIView):
-
+    permission_classes = [AllowAny]
     def post(self, request):
         """POST /api/auth/setup-otp"""
         serializer = SetupOtpSerializer(data=request.data)
@@ -97,7 +97,7 @@ class SetupOtpView(APIView):
         )
 
 class VerifyOtpSetupView(APIView):
-
+    permission_classes = [AllowAny]
     def post(self, request):
         """POST /api/auth/verify-otp-setup"""
         serializer = VerifyOtpSetupSerializer(data=request.data)
@@ -123,7 +123,7 @@ class VerifyOtpSetupView(APIView):
             status=status.HTTP_200_OK,
         )
 class LoginView(APIView):
-
+    permission_classes = [AllowAny]
     def post(self, request):
         """POST /api/auth/login"""
         serializer = LoginSerializer(data=request.data)
@@ -147,7 +147,7 @@ class LoginView(APIView):
         )
 
 class VerifyOtpView(APIView):
-
+    permission_classes = [AllowAny]
     def post(self, request):
         """POST /api/auth/verify-otp"""
         serializer = VerifyOtpSerializer(data=request.data)
@@ -171,7 +171,7 @@ class VerifyOtpView(APIView):
         )
 
 class RefreshTokenView(APIView):
-
+    permission_classes = [AllowAny]
     def post(self, request):
         """POST /api/auth/refresh"""
         serializer = RefreshTokenSerializer(data=request.data)
@@ -195,7 +195,7 @@ class RefreshTokenView(APIView):
 
 
 class LogoutView(APIView):
-
+    permission_classes = [AllowAny]
     def post(self, request):
         """POST /api/auth/logout"""
         serializer = LogoutSerializer(data=request.data)
