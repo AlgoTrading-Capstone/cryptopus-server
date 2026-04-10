@@ -54,3 +54,24 @@ class Position(models.Model):
 
     def __str__(self):
         return f"{self.user} - {self.side} {self.size_btc} {self.symbol}"
+class Candle(models.Model):
+    """
+    OHLCV market data — TimescaleDB hypertable.
+    Composite PK: (time, symbol).
+    Partitioned by time for efficient time-series queries.
+    """
+    time = models.DateTimeField(primary_key=True)
+    symbol = models.TextField(default="BTC/USD")
+    open = models.FloatField()
+    high = models.FloatField()
+    low = models.FloatField()
+    close = models.FloatField()
+    volume = models.FloatField()
+
+    class Meta:
+        db_table = "candles"
+        unique_together = [["time", "symbol"]]
+        ordering = ["-time"]
+
+    def __str__(self):
+        return f"{self.symbol} @ {self.time} — close: {self.close}"
