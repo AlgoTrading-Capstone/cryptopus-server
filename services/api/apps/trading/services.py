@@ -22,7 +22,7 @@ class TradingService:
             raise ValueError("Amount must be greater than 0")
 
         account = TradingService._get_or_create_account(user)
-        account.allocated_usd += amount
+        account.allocated_usd = Decimal(str(account.allocated_usd)) + amount
         account.updated_at = timezone.now()
         account.save(update_fields=["allocated_usd", "updated_at"])
 
@@ -52,7 +52,7 @@ class TradingService:
         if amount > account.allocated_usd:
             raise ValueError("Insufficient allocated balance")
 
-        account.allocated_usd -= amount
+        account.allocated_usd = Decimal(str(account.allocated_usd)) - amount
         account.save(update_fields=["allocated_usd", "updated_at"])
 
         # Sync state to Redis
