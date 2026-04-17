@@ -1,4 +1,16 @@
 services:
+  postgres:
+    image: postgres:16
+    container_name: cryptopus-postgres
+    environment:
+      POSTGRES_DB: cryptopus
+      POSTGRES_USER: cryptopus
+      POSTGRES_PASSWORD: cryptopus123
+    ports:
+      - "5433:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    restart: unless-stopped
 
   redis:
     image: redis:7
@@ -16,8 +28,16 @@ services:
       - "8000:8000"
     environment:
       - DJANGO_SETTINGS_MODULE=cryptopus.settings.development
+      - DJANGO_SUPERUSER_EMAIL=admin@cryptopus.local
+      - DJANGO_SUPERUSER_PASSWORD=admin123
+      - DJANGO_SUPERUSER_FIRST_NAME=Admin
+      - DJANGO_SUPERUSER_LAST_NAME=User
     volumes:
       - ./services/api:/app
     depends_on:
+      - postgres
       - redis
     restart: unless-stopped
+
+volumes:
+  postgres_data:

@@ -48,6 +48,7 @@ INSTALLED_APPS = [
     "apps.admin_panel",
     "apps.alerts",
     "apps.help",
+    "apps.system",
 ]
 
 MIDDLEWARE = [
