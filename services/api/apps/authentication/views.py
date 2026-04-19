@@ -33,6 +33,12 @@ class RegisterView(APIView):
                 password=serializer.validated_data["password"],
                 first_name=serializer.validated_data["first_name"],
                 last_name=serializer.validated_data["last_name"],
+                date_of_birth=serializer.validated_data.get("date_of_birth"),
+                phone_number=serializer.validated_data.get("phone_number"),
+                address=serializer.validated_data.get("address"),
+                city=serializer.validated_data.get("city"),
+                country=serializer.validated_data.get("country"),
+                postal_code=serializer.validated_data.get("postal_code"),
             )
         except ValueError as e:
             return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)

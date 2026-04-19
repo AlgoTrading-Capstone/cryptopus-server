@@ -1,16 +1,20 @@
 import pyotp
 import uuid
-import json
+import random
+import string
 from rest_framework_simplejwt.tokens import RefreshToken
 from django.core.cache import cache
 from apps.authentication.models import User
 from rest_framework_simplejwt.exceptions import TokenError
-
+from django.core.mail import send_mail
+from django.template.loader import render_to_string
 
 class AuthService:
 
     @staticmethod
-    def register_user(email: str, password: str, first_name: str, last_name: str) -> User:
+    def register_user(email, password, first_name, last_name,
+                      date_of_birth=None, phone_number=None,
+                      address=None, city=None, country=None, postal_code=None):
         """Register a new user and send email verification code."""
         if User.objects.filter(email=email).exists():
             raise ValueError("Email already registered")
@@ -21,15 +25,44 @@ class AuthService:
             first_name=first_name,
             last_name=last_name,
         )
+        user.date_of_birth = date_of_birth
+        user.phone_number = phone_number
+        user.address = address
+        user.city = city
+        user.country = country
+        user.postal_code = postal_code
+        user.save(update_fields=[
+            "date_of_birth", "phone_number", "address",
+            "city", "country", "postal_code",
+        ])
 
-        # Generate and cache email verification code (10 min TTL)
-        verification_code = pyotp.random_base32()[:6].upper() # Generate a random 6-character verification code
-        cache.set(f"email_verification:{user.id}", verification_code, timeout=600) #saved in cache with a key that includes the user's ID and a TTL of 10 minutes (redis will automatically delete the code after 10 minutes)
+        verification_code = AuthService._generate_verification_code()
+        cache.set(f"email_verification:{user.id}", verification_code, timeout=600)
 
-        # TODO: send verification email
-        print(f"[DEV] Verification code for {email}: {verification_code}")
-
+        AuthService._send_verification_email(user.email, verification_code, first_name)
         return user
+
+    @staticmethod
+    def _send_verification_email(email: str, verification_code: str, first_name: str = ""):
+        """Send verification email using HTML template."""
+
+
+        html_message = render_to_string(
+            "authentication/verify_email.html",
+            {
+                "first_name": first_name,
+                "verification_code": verification_code,
+            }
+        )
+
+        send_mail(
+            subject="Verify your Cryptopus account",
+            message=f"Your verification code is: {verification_code}",
+            from_email="noreply@cryptopus.com",
+            recipient_list=[email],
+            html_message=html_message,
+            fail_silently=True,
+        )
 
     @staticmethod
     def verify_email(email: str, verification_code: str) -> User:
@@ -89,6 +122,12 @@ class AuthService:
             "qr_code_url": qr_code_url,
             "message": "OTP setup initialized successfully.",
         }
+
+    @staticmethod
+    def _generate_verification_code() -> str:
+        """Generate a 6-character alphanumeric verification code."""
+
+        return "".join(random.choices(string.ascii_uppercase + string.digits, k=6))
 
     @staticmethod
     def verify_otp_setup(email: str, otp_code: str) -> User:

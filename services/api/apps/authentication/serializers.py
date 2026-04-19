@@ -5,9 +5,15 @@ from apps.authentication.models import User
 class RegisterSerializer(serializers.Serializer):
     """Serializer for user registration."""
     email = serializers.EmailField()
-    password = serializers.CharField(min_length=8, write_only=True)
+    password = serializers.CharField(min_length=8)
     first_name = serializers.CharField()
     last_name = serializers.CharField()
+    date_of_birth = serializers.DateField()
+    phone_number = serializers.CharField(max_length=20)
+    address = serializers.CharField()
+    city = serializers.CharField(max_length=100)
+    country = serializers.CharField(max_length=100)
+    postal_code = serializers.CharField(max_length=20)
 
 
 class VerifyEmailSerializer(serializers.Serializer):

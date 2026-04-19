@@ -14,6 +14,12 @@ class TestRegister:
             "password": "StrongPass123!",
             "first_name": "New",
             "last_name": "User",
+            "date_of_birth": "1995-01-15",
+            "phone_number": "+15551234567",
+            "address": "123 Main St",
+            "city": "Tel Aviv",
+            "country": "Israel",
+            "postal_code": "6100000",
         }, format="json")
 
         assert response.status_code == 201
@@ -28,6 +34,12 @@ class TestRegister:
             "password": "StrongPass123!",
             "first_name": "Test",
             "last_name": "User",
+            "date_of_birth": "1995-01-15",
+            "phone_number": "+15551234567",
+            "address": "123 Main St",
+            "city": "Tel Aviv",
+            "country": "Israel",
+            "postal_code": "6100000",
         }, format="json")
 
         assert response.status_code == 400
