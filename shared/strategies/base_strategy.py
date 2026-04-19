@@ -7,19 +7,10 @@ It establishes a universal contract for strategy input/output and core methods.
 
 from abc import ABC, abstractmethod
 from datetime import datetime
-from enum import Enum
 from typing import NamedTuple
 import pandas as pd
+from shared.constants import SignalType
 
-
-class SignalType(Enum):
-    """
-    Enumeration of possible trading signals.
-    """
-    LONG = "LONG"  # Target position is long
-    SHORT = "SHORT"  # Target position is short
-    FLAT = "FLAT"  # Target position is zero (no exposure)
-    HOLD = "HOLD"  # No recommendation / keep current exposure
 
 
 class StrategyRecommendation(NamedTuple):
