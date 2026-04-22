@@ -1,0 +1,7 @@
+apscheduler==3.10.4
+ccxt
+psycopg2-binary
+redis
+pandas
+numpy
+ta-lib
