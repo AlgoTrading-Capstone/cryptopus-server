@@ -17,7 +17,7 @@ from apscheduler.triggers.cron import CronTrigger
 import pandas as pd
 
 from config import GLOBAL_TICK, MAX_STRATEGY_RUNTIME
-from infrastructure.redis_client import RedisClient
+from redis_client import RedisClient
 from infrastructure.kraken_client import KrakenClient
 from infrastructure.db_client import DBClient
 from engine.position_manager import PositionManager

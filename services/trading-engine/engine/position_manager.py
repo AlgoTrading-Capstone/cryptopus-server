@@ -1,5 +1,5 @@
 import logging
-from datetime import datetime, timezone
+from datetime import datetime
 from decimal import Decimal
 from shared.state_builder import PositionState
 from shared.constants import (
@@ -9,7 +9,7 @@ from shared.constants import (
     STOP_UPDATE_DEADZONE_PCT,
     MAX_POSITION_BTC,
 )
-from infrastructure.redis_client import RedisClient
+from redis_client import RedisClient
 from infrastructure.db_client import DBClient
 
 logger = logging.getLogger(__name__)

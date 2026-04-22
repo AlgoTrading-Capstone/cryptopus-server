@@ -4,7 +4,7 @@ from decimal import Decimal
 from shared.constants import EXPOSURE_DEADZONE
 from infrastructure.kraken_client import KrakenClient
 from infrastructure.db_client import DBClient
-from infrastructure.redis_client import RedisClient
+from redis_client import RedisClient
 from engine.position_manager import PositionManager
 from shared.state_builder import PositionState
 
