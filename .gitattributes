@@ -1,0 +1,8 @@
+# Force LF line endings for all shell scripts so Windows checkouts with
+# core.autocrlf=true don't break Linux container entrypoints.
+*.sh text eol=lf
+
+# Other POSIX files that must stay LF inside Linux containers.
+Dockerfile text eol=lf
+*.Dockerfile text eol=lf
+docker-compose*.yml text eol=lf
