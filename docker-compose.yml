@@ -34,6 +34,7 @@ services:
       - DJANGO_SUPERUSER_LAST_NAME=User
     volumes:
       - ./services/api:/app
+    command: ["sh", "-c", "sed -i 's/\\r$//' /app/entrypoint.sh && exec sh /app/entrypoint.sh"]
     depends_on:
       - postgres
       - redis
