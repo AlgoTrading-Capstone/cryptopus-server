@@ -1,0 +1,57 @@
+# Docker image configuration
+image:
+  repository: cryptopus/api
+  tag: latest
+  pullPolicy: Always
+
+# Number of pod replicas
+replicaCount: 2
+
+# Service configuration
+service:
+  type: ClusterIP
+  port: 80
+  targetPort: 8000
+
+# Ingress configuration
+ingress:
+  enabled: true
+  host: api.cryptopus.com
+  annotations:
+    kubernetes.io/ingress.class: alb
+    alb.ingress.kubernetes.io/scheme: internet-facing
+    alb.ingress.kubernetes.io/target-type: ip
+
+# Resource limits per pod
+resources:
+  requests:
+    cpu: 250m
+    memory: 512Mi
+  limits:
+    cpu: 500m
+    memory: 1Gi
+
+# Environment
+environment: dev
+
+# Django settings
+django:
+  settingsModule: cryptopus.settings.production
+  allowedHosts: "api.cryptopus.com,localhost"
+  debug: "False"
+
+# Database
+database:
+  host: ""
+  port: "5432"
+  name: cryptopus
+
+# Redis
+redis:
+  host: ""
+  port: "6379"
+
+# AWS Secrets Manager ARNs
+secrets:
+  djangoSecretArn: ""
+  dbCredentialsArn: ""
