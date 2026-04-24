@@ -1,9 +1,20 @@
 from django.urls import path
-from apps.authentication.views import RegisterView, VerifyEmailView, SetupOtpView, VerifyOtpSetupView, LoginView, VerifyOtpView, RefreshTokenView, LogoutView
+from apps.authentication.views import (
+    RegisterView,
+    VerifyEmailView,
+    SetupOtpView,
+    VerifyOtpSetupView,
+    LoginView,
+    VerifyOtpView,
+    RefreshTokenView,
+    LogoutView,
+    ResendVerificationEmailView,
+)
 
 urlpatterns = [
     path("register", RegisterView.as_view()),
     path("verify-email", VerifyEmailView.as_view()),
+    path("resend-verification-email", ResendVerificationEmailView.as_view()),
     path("setup-otp", SetupOtpView.as_view()),
     path("verify-otp-setup", VerifyOtpSetupView.as_view()),
     path("login", LoginView.as_view()),

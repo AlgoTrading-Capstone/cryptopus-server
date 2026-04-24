@@ -9,6 +9,19 @@ from rest_framework_simplejwt.exceptions import TokenError
 from django.core.mail import send_mail
 from django.template.loader import render_to_string
 
+
+class UserNotFoundError(Exception):
+    """Raised when a lookup by email has no matching user."""
+
+
+class AlreadyVerifiedError(Exception):
+    """Raised when an action requires an unverified email but the user is already verified."""
+
+
+class CooldownError(Exception):
+    """Raised when an operation is rate-limited by an active cooldown."""
+
+
 class AuthService:
 
     @staticmethod
@@ -155,7 +168,12 @@ class AuthService:
 
     @staticmethod
     def login(email: str, password: str) -> dict:
-        """Validate credentials and return temporary session for OTP verification."""
+        """Validate credentials and branch on registration state.
+
+        Returns email_verified and otp_verified flags so the client can resume
+        registration at the correct step. A temporary_session_id is issued only
+        when registration is fully complete.
+        """
         try:
             user = User.objects.get(email=email)
         except User.DoesNotExist:
@@ -164,24 +182,70 @@ class AuthService:
         if not user.check_password(password):
             raise ValueError("Invalid credentials")
 
-        if not user.email_verified:
-            raise ValueError("Email not verified")
-
         if user.account_status != User.AccountStatus.ACTIVE:
             raise ValueError("Account is suspended")
 
-        # Create temporary session in Redis - valid for 5 minutes
-        tmp_session_id = str(uuid.uuid4()) #128-character unique identifier for the temporary session, generated using UUID4 which creates a random UUID. This ID will be used as a key in Redis to store the temporary session data for OTP verification.
+        if not user.email_verified:
+            return {
+                "email_verified": False,
+                "otp_verified": False,
+                "temporary_session_id": None,
+                "message": "Email not verified. Please complete registration.",
+            }
+
+        if not user.otp_enabled:
+            return {
+                "email_verified": True,
+                "otp_verified": False,
+                "temporary_session_id": None,
+                "message": "OTP setup not completed. Please finish registration.",
+            }
+
+        tmp_session_id = str(uuid.uuid4())
         cache.set(
             f"session:tmp:{tmp_session_id}",
             {"user_id": str(user.id), "email": user.email},
-            timeout=300, #5 minutes (300 seconds)
+            timeout=300,
         )
 
         return {
-            "otp_required": True,
+            "email_verified": True,
+            "otp_verified": True,
             "temporary_session_id": tmp_session_id,
             "message": "Password verified. OTP verification required.",
+        }
+
+    @staticmethod
+    def resend_verification_email(email: str) -> dict:
+        """Re-issue a fresh email verification code to a pending registration.
+
+        Invalidates any previously issued code for this user. Rate-limited to
+        one request per 30 seconds per email.
+        """
+        try:
+            user = User.objects.get(email=email)
+        except User.DoesNotExist:
+            raise UserNotFoundError("No such pending registration.")
+
+        if user.email_verified:
+            raise AlreadyVerifiedError("Email already verified.")
+
+        cooldown_key = f"resend_cooldown:{email.lower()}"
+        if cache.get(cooldown_key) is not None:
+            raise CooldownError("Too many requests. Please wait before requesting another code.")
+
+        cache.delete(f"email_verification:{user.id}")
+
+        verification_code = AuthService._generate_verification_code()
+        cache.set(f"email_verification:{user.id}", verification_code, timeout=600)
+        cache.set(cooldown_key, "1", timeout=30)
+
+        AuthService._send_verification_email(user.email, verification_code, user.first_name)
+
+        return {
+            "message": "Verification code resent.",
+            "expires_in_seconds": 600,
+            "cooldown_seconds": 30,
         }
 
     @staticmethod

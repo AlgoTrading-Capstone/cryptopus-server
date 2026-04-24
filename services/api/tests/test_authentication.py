@@ -124,15 +124,18 @@ class TestVerifyEmail:
 class TestLogin:
 
     def test_login_success(self, api_client, verified_user):
-        """User can login with correct credentials."""
+        """Fully-registered user logs in and receives a temporary OTP session."""
         response = api_client.post("/api/auth/login", {
             "email": verified_user.email,
             "password": "StrongPass123!",
         }, format="json")
 
         assert response.status_code == 200
-        assert "temporary_session_id" in response.data["data"]
-        assert response.data["data"]["otp_required"] is True
+        data = response.data["data"]
+        assert data["email_verified"] is True
+        assert data["otp_verified"] is True
+        assert data["temporary_session_id"]
+        assert "otp_required" not in data
 
     def test_login_wrong_password(self, api_client, verified_user):
         """Login fails with wrong password."""
@@ -154,16 +157,100 @@ class TestLogin:
         assert response.status_code == 400
 
     def test_login_unverified_email(self, api_client, create_user):
-        """Login fails if email is not verified."""
-        user = create_user(email_verified=False)
+        """Login succeeds but signals unverified email + no temp session."""
+        user = create_user(email_verified=False, otp_enabled=False)
 
         response = api_client.post("/api/auth/login", {
             "email": user.email,
             "password": "StrongPass123!",
         }, format="json")
 
+        assert response.status_code == 200
+        data = response.data["data"]
+        assert data["email_verified"] is False
+        assert data["otp_verified"] is False
+        assert data["temporary_session_id"] is None
+
+    def test_login_email_verified_otp_not_setup(self, api_client, create_user):
+        """Login succeeds but signals OTP setup incomplete + no temp session."""
+        user = create_user(email_verified=True, otp_enabled=False)
+
+        response = api_client.post("/api/auth/login", {
+            "email": user.email,
+            "password": "StrongPass123!",
+        }, format="json")
+
+        assert response.status_code == 200
+        data = response.data["data"]
+        assert data["email_verified"] is True
+        assert data["otp_verified"] is False
+        assert data["temporary_session_id"] is None
+
+
+@pytest.mark.django_db
+class TestResendVerificationEmail:
+
+    def test_resend_success_invalidates_old_code(self, api_client, create_user):
+        """Resend issues a new code and invalidates the previous one."""
+        user = create_user(email_verified=False, otp_enabled=False)
+        cache.set(f"email_verification:{user.id}", "OLDCOD", timeout=600)
+
+        response = api_client.post("/api/auth/resend-verification-email", {
+            "email": user.email,
+        }, format="json")
+
+        assert response.status_code == 200
+        data = response.data["data"]
+        assert data["message"] == "Verification code resent."
+        assert data["expires_in_seconds"] == 600
+        assert data["cooldown_seconds"] == 30
+
+        new_code = cache.get(f"email_verification:{user.id}")
+        assert new_code is not None
+        assert new_code != "OLDCOD"
+        assert len(new_code) == 6
+
+    def test_resend_user_not_found(self, api_client):
+        """Resend returns 404 when no user exists for the email."""
+        response = api_client.post("/api/auth/resend-verification-email", {
+            "email": "nobody@cryptopus.com",
+        }, format="json")
+
+        assert response.status_code == 404
+        assert response.data["error"] == "No such pending registration."
+
+    def test_resend_already_verified(self, api_client, verified_user):
+        """Resend returns 409 when the email is already verified."""
+        response = api_client.post("/api/auth/resend-verification-email", {
+            "email": verified_user.email,
+        }, format="json")
+
+        assert response.status_code == 409
+        assert response.data["error"] == "Email already verified."
+
+    def test_resend_cooldown_active(self, api_client, create_user):
+        """Second resend within the cooldown window returns 429."""
+        user = create_user(email_verified=False, otp_enabled=False)
+
+        first = api_client.post("/api/auth/resend-verification-email", {
+            "email": user.email,
+        }, format="json")
+        assert first.status_code == 200
+
+        second = api_client.post("/api/auth/resend-verification-email", {
+            "email": user.email,
+        }, format="json")
+
+        assert second.status_code == 429
+        assert "error" in second.data
+
+    def test_resend_invalid_email(self, api_client):
+        """Resend returns 400 for malformed email input."""
+        response = api_client.post("/api/auth/resend-verification-email", {
+            "email": "not-an-email",
+        }, format="json")
+
         assert response.status_code == 400
-        assert response.data["error"] == "Email not verified"
 
 
 @pytest.mark.django_db

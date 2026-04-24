@@ -52,9 +52,22 @@ class LoginSerializer(serializers.Serializer):
 
 class LoginResponseSerializer(serializers.Serializer):
     """Serializer for login response."""
-    otp_required = serializers.BooleanField()
-    temporary_session_id = serializers.CharField()
+    email_verified = serializers.BooleanField()
+    otp_verified = serializers.BooleanField()
+    temporary_session_id = serializers.CharField(allow_null=True, required=False)
     message = serializers.CharField()
+
+
+class ResendVerificationEmailSerializer(serializers.Serializer):
+    """Serializer for resending the email verification code."""
+    email = serializers.EmailField()
+
+
+class ResendVerificationEmailResponseSerializer(serializers.Serializer):
+    """Serializer for resend verification email response."""
+    message = serializers.CharField()
+    expires_in_seconds = serializers.IntegerField()
+    cooldown_seconds = serializers.IntegerField()
 
 class VerifyOtpSerializer(serializers.Serializer):
     """Serializer for verifying OTP during login."""

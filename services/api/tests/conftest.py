@@ -1,8 +1,17 @@
 import pytest
 import pyotp
+from django.core.cache import cache
 from rest_framework.test import APIClient
 from apps.authentication.models import User
 from rest_framework_simplejwt.tokens import RefreshToken
+
+
+@pytest.fixture(autouse=True)
+def _clear_cache():
+    """Ensure each test starts with an empty cache (locmem persists otherwise)."""
+    cache.clear()
+    yield
+    cache.clear()
 
 
 @pytest.fixture

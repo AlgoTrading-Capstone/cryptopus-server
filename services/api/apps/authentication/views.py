@@ -15,8 +15,15 @@ from apps.authentication.serializers import (
     RefreshTokenSerializer,
     RefreshTokenResponseSerializer,
     LogoutSerializer,
+    ResendVerificationEmailSerializer,
+    ResendVerificationEmailResponseSerializer,
 )
-from apps.authentication.services import AuthService
+from apps.authentication.services import (
+    AuthService,
+    UserNotFoundError,
+    AlreadyVerifiedError,
+    CooldownError,
+)
 from rest_framework.permissions import AllowAny
 
 class RegisterView(APIView):
@@ -195,6 +202,34 @@ class RefreshTokenView(APIView):
             {
                 "status": "success",
                 "data": RefreshTokenResponseSerializer(data).data,
+            },
+            status=status.HTTP_200_OK,
+        )
+
+
+class ResendVerificationEmailView(APIView):
+    permission_classes = [AllowAny]
+    def post(self, request):
+        """POST /api/auth/resend-verification-email"""
+        serializer = ResendVerificationEmailSerializer(data=request.data)
+        if not serializer.is_valid():
+            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+        try:
+            data = AuthService.resend_verification_email(
+                email=serializer.validated_data["email"],
+            )
+        except UserNotFoundError as e:
+            return Response({"error": str(e)}, status=status.HTTP_404_NOT_FOUND)
+        except AlreadyVerifiedError as e:
+            return Response({"error": str(e)}, status=status.HTTP_409_CONFLICT)
+        except CooldownError as e:
+            return Response({"error": str(e)}, status=status.HTTP_429_TOO_MANY_REQUESTS)
+
+        return Response(
+            {
+                "status": "success",
+                "data": ResendVerificationEmailResponseSerializer(data).data,
             },
             status=status.HTTP_200_OK,
         )
