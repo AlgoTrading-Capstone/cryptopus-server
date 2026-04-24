@@ -60,3 +60,23 @@ variable "db_username" {
   type        = string
   default     = "cryptopus"
 }
+
+variable "django_secret_key" {
+  description = "Django secret key"
+  type        = string
+  sensitive   = true
+  default     = "dev-secret-key-change-in-production"
+}
+
+variable "jwt_secret" {
+  description = "JWT signing secret"
+  type        = string
+  sensitive   = true
+  default     = "dev-jwt-secret-change-in-production"
+}
+
+variable "alb_arn" {
+  description = "ARN of the ALB created by Kubernetes Ingress controller"
+  type        = string
+  default     = ""
+}
