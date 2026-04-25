@@ -8,7 +8,7 @@ class RegisterSerializer(serializers.Serializer):
     password = serializers.CharField(min_length=8)
     first_name = serializers.CharField()
     last_name = serializers.CharField()
-    date_of_birth = serializers.DateField()
+    dob = serializers.DateField()
     phone_number = serializers.CharField(max_length=20)
     address = serializers.CharField()
     city = serializers.CharField(max_length=100)

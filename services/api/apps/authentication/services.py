@@ -26,7 +26,7 @@ class AuthService:
 
     @staticmethod
     def register_user(email, password, first_name, last_name,
-                      date_of_birth=None, phone_number=None,
+                      dob=None, phone_number=None,
                       address=None, city=None, country=None, postal_code=None):
         """Register a new user and send email verification code."""
         if User.objects.filter(email=email).exists():
@@ -38,14 +38,14 @@ class AuthService:
             first_name=first_name,
             last_name=last_name,
         )
-        user.date_of_birth = date_of_birth
+        user.dob = dob
         user.phone_number = phone_number
         user.address = address
         user.city = city
         user.country = country
         user.postal_code = postal_code
         user.save(update_fields=[
-            "date_of_birth", "phone_number", "address",
+            "dob", "phone_number", "address",
             "city", "country", "postal_code",
         ])
 

@@ -17,7 +17,7 @@ class CryptopusUserChangeForm(UserChangeForm):
         model = User
         fields = (
             "email", "first_name", "last_name",
-            "date_of_birth", "phone_number",
+            "dob", "phone_number",
             "address", "city", "country", "postal_code",
             "role", "account_status",
         )
@@ -42,7 +42,7 @@ class UserAdmin(BaseUserAdmin):
 
     fieldsets = (
         (None, {"fields": ("email", "password")}),
-        ("Personal info", {"fields": ("first_name", "last_name", "date_of_birth", "phone_number")}),
+        ("Personal info", {"fields": ("first_name", "last_name", "dob", "phone_number")}),
         ("Address", {"fields": ("address", "city", "country", "postal_code")}),
         ("Login status", {"fields": ("account_status", "email_verified", "otp_enabled", "otp_secret")}),
         ("Role & permissions", {"fields": ("role", "is_staff", "is_superuser", "groups", "user_permissions")}),

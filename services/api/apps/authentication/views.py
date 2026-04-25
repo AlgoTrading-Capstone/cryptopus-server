@@ -40,7 +40,7 @@ class RegisterView(APIView):
                 password=serializer.validated_data["password"],
                 first_name=serializer.validated_data["first_name"],
                 last_name=serializer.validated_data["last_name"],
-                date_of_birth=serializer.validated_data.get("date_of_birth"),
+                dob=serializer.validated_data.get("dob"),
                 phone_number=serializer.validated_data.get("phone_number"),
                 address=serializer.validated_data.get("address"),
                 city=serializer.validated_data.get("city"),
