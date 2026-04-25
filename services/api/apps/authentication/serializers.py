@@ -24,9 +24,11 @@ class VerifyEmailSerializer(serializers.Serializer):
 
 class UserResponseSerializer(serializers.ModelSerializer):
     """Serializer for user response data."""
+    user_id = serializers.UUIDField(source="id", read_only=True)
+
     class Meta:
         model = User
-        fields = ["id", "email", "created_at"]
+        fields = ["user_id", "email", "created_at"]
 
 class SetupOtpSerializer(serializers.Serializer):
     """Serializer for OTP setup."""
