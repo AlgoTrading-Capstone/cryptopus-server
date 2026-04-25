@@ -15,7 +15,12 @@ class CryptopusUserCreationForm(UserCreationForm):
 class CryptopusUserChangeForm(UserChangeForm):
     class Meta:
         model = User
-        fields = ("email", "first_name", "last_name", "role", "account_status")
+        fields = (
+            "email", "first_name", "last_name",
+            "date_of_birth", "phone_number",
+            "address", "city", "country", "postal_code",
+            "role", "account_status",
+        )
 
 
 @admin.register(User)
@@ -32,12 +37,13 @@ class UserAdmin(BaseUserAdmin):
         "role", "account_status", "email_verified", "otp_enabled",
         "is_staff", "is_superuser",
     )
-    search_fields = ("email", "first_name", "last_name")
+    search_fields = ("email", "first_name", "last_name", "phone_number", "city", "country")
     ordering = ("email",)
 
     fieldsets = (
         (None, {"fields": ("email", "password")}),
-        ("Personal info", {"fields": ("first_name", "last_name")}),
+        ("Personal info", {"fields": ("first_name", "last_name", "date_of_birth", "phone_number")}),
+        ("Address", {"fields": ("address", "city", "country", "postal_code")}),
         ("Login status", {"fields": ("account_status", "email_verified", "otp_enabled", "otp_secret")}),
         ("Role & permissions", {"fields": ("role", "is_staff", "is_superuser", "groups", "user_permissions")}),
         ("Timestamps", {"fields": ("last_login", "created_at", "deleted_at")}),
